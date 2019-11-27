@@ -6,6 +6,7 @@ export default function DustEffect(
 
 interface DustEffectProps extends React.HTMLAttributes<HTMLDivElement> {
   src: string
+  imgClassName: string
 }
 
 export interface DustEffectRef {
