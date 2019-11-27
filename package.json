@@ -1,0 +1,75 @@
+{
+  "main": "dist/index.js",
+  "name": "react-dust-effect",
+  "version": "0.0.1",
+  "description": "image dust effect for react",
+  "files": [
+    "dist",
+    "src",
+    "typings"
+  ],
+  "config": {
+    "lint_target": "src/**/*.jsx src/**/*.js *.js"
+  },
+  "typings": "typings/react-dust-effect.d.ts",
+  "scripts": {
+    "build": "yarn run build:clean && yarn run build:all",
+    "build:clean": "rimraf dist",
+    "build:all": "rollup -c",
+    "prettier:check": "yarn prettier --debug-check $npm_package_config_lint_target",
+    "prettier:write": "yarn prettier --write $npm_package_config_lint_target",
+    "lint:eslint": "eslint $npm_package_config_lint_target",
+    "lint": "yarn lint:eslint && yarn prettier:check"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jiggum/react-dust-effect.git"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn lint"
+    }
+  },
+  "keywords": [
+    "react",
+    "image",
+    "dust",
+    "effect",
+    "thanos"
+  ],
+  "author": "jiggum <0s.dongmin@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jiggum/react-dust-effect/issues"
+  },
+  "homepage": "https://github.com/jiggum/react-dust-effect",
+  "devDependencies": {
+    "@babel/core": "^7.7.4",
+    "@babel/preset-env": "^7.7.4",
+    "@babel/preset-react": "^7.7.4",
+    "eslint": "^6.7.1",
+    "eslint-config-airbnb": "^18.0.1",
+    "eslint-config-prettier": "^6.7.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.1",
+    "eslint-plugin-react": "^7.16.0",
+    "eslint-plugin-react-hooks": "^1.7.0",
+    "husky": "^3.1.0",
+    "node-sass": "^4.13.0",
+    "prettier": "^1.19.1",
+    "react": "^16.12.0",
+    "rimraf": "^3.0.0",
+    "rollup": "^1.27.5",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-postcss": "^2.0.3",
+    "rollup-plugin-uglify": "^6.0.3",
+    "tslib": "^1.10.0"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0"
+  },
+  "dependencies": {
+    "prop-types": "^15.7.2"
+  }
+}

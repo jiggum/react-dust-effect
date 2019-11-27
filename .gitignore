@@ -1,0 +1,12 @@
+# Logs
+yarn-error.log
+
+# Dependency directories
+node_modules/
+
+# Editors
+.idea
+.vscode
+
+# Bundle
+dist/
