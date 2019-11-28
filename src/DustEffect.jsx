@@ -1,121 +1,145 @@
-/* eslint-disable no-param-reassign */
-import React, { useRef, useCallback, useState, useImperativeHandle } from 'react'
+import React, { useRef, useCallback, useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
-import { randomWeighted, randomInteger } from './util'
+import {
+  randomInteger,
+  createBlankImageData,
+  putCanvasFromImageData,
+  weightedRandomDistrib,
+  updateStyle,
+} from './util'
 import styles from './DustEffect.scss'
 
-const CANVAS_NUM = 30
-const BASE_DURATION = 800
-const OUTER_TIMEOUT_DELAY = 70
-const INNER_TIMEOUT_DELAY = 110
-const START_DELAY = 1000
+const IMAGE_CHANNEL = 4 // r,g,b,a
 
-function weightedRandomDistrib(peak) {
-  const prob = []
-  const seq = []
-  for (let i = 0; i < CANVAS_NUM; i += 1) {
-    prob.push((CANVAS_NUM - Math.abs(peak - i)) ** 2)
-    seq.push(i)
-  }
-  return randomWeighted(seq, prob)
+const defaultDistribution = (hPos, vPos, canvasIndex, canvasNum) =>
+  (canvasNum - Math.abs(vPos * canvasNum - canvasIndex)) ** 3
+
+const defaultOption = {
+  canvasNum: 25,
+  baseDuration: 800,
+  outerTimeoutDelay: 70,
+  innerTimeoutDelay: 110,
+  translateX: 100,
+  translateY: -100,
+  rotateMin: -15,
+  rotateMax: 15,
+  blur: 1,
+  distributionFunc: defaultDistribution,
 }
 
-function createBlankImageData(imageData, imageDataArray) {
-  for (let i = 0; i < CANVAS_NUM; i += 1) {
-    const arr = new Uint8ClampedArray(imageData.data)
-    for (let j = 0; j < arr.length; j += 1) {
-      arr[j] = 0
-    }
-    imageDataArray.push(arr)
-  }
-}
-
-function putCanvasFromImageData(canvas, imageDataArray, width, height) {
-  if (canvas) {
-    canvas.width = width
-    canvas.height = height
-    const context = canvas.getContext('2d')
-    context.putImageData(new window.ImageData(imageDataArray, width, height), 0, 0)
-  }
-}
-
-function ac(canvas, partialCanvas) {
-  const imageDataArray = []
+function updatePartialCanvas(canvas, partialCanvas, distribution) {
+  const canvasNum = partialCanvas.length
   const context = canvas.getContext('2d')
   const { width, height } = canvas
   const imageData = context.getImageData(0, 0, width, height)
   const pixelArr = imageData.data
-  createBlankImageData(imageData, imageDataArray)
-  for (let i = 0; i < pixelArr.length; i += 4) {
+  const imageDataArray = createBlankImageData(imageData, canvasNum)
+  for (let i = 0; i < pixelArr.length; i += IMAGE_CHANNEL) {
     // find the highest probability canvas the pixel should be in
-    const p = Math.floor((i / pixelArr.length) * partialCanvas.length)
-    for (let j = 0; j < 1; j += 1) {
-      const a = imageDataArray[weightedRandomDistrib(p)]
-      for (let k = 0; k < 4; k += 1) {
-        a[i + k] = pixelArr[i + k]
-      }
+    const pixelPos = Math.floor(i / IMAGE_CHANNEL)
+    const hPos = ((pixelPos % width) + 1) / width
+    const vPos = (Math.floor(pixelPos / width) + 1) / height
+    const targetCanvas = imageDataArray[weightedRandomDistrib(hPos, vPos, canvasNum, distribution)]
+    for (let k = 0; k < IMAGE_CHANNEL; k += 1) {
+      targetCanvas[i + k] = pixelArr[i + k]
     }
   }
-  for (let i = 0; i < partialCanvas.length; i += 1) {
-    putCanvasFromImageData(partialCanvas[i].current, imageDataArray[i], width, height)
-  }
+  partialCanvas.forEach((partialCanvasRef, i) => {
+    putCanvasFromImageData(partialCanvasRef.current, imageDataArray[i], width, height)
+  })
 }
 
-function BaseDustEffect({ src, imgClassName, ...props }, ref) {
+function DustEffect({ src, imgClassName, show, option, ...props }) {
+  option = {
+    ...defaultOption,
+    ...option,
+  }
   const [converted, setConverted] = useState(false)
   const wrapperRef = useRef(null)
   const canvasRef = useRef(null)
   const imageRef = useRef(null)
-  const partialCanvas = useRef(Array.from({ length: CANVAS_NUM }, () => React.createRef()))
+  const partialCanvas = useRef(Array.from({ length: option.canvasNum }, () => React.createRef()))
 
   const handleStart = useCallback(() => {
     if (imageRef.current) {
-      imageRef.current.style.transition = `opacity ${START_DELAY}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`
-      imageRef.current.style.opacity = '0'
+      updateStyle(imageRef.current, {
+        transition: [
+          `opacity ${option.baseDuration}ms cubic-bezier(0.55, 0.085, 0.68, 0.53)`,
+          `filter ${option.baseDuration}ms cubic-bezier(0.55, 0.085, 0.68, 0.53)`,
+        ],
+        filter: `blur(${option.blur}px)`,
+        opacity: '0',
+      })
     }
     partialCanvas.current.forEach((pc, i) => {
-      setTimeout(() => {
-        if (pc.current) {
-          pc.current.style.transition = `filter ${BASE_DURATION}ms cubic-bezier(0.25, 0.46, 0.45, 0.94), transform ${BASE_DURATION +
-            INNER_TIMEOUT_DELAY *
-              i}ms cubic-bezier(0.55, 0.085, 0.68, 0.53), opacity ${BASE_DURATION +
-            (INNER_TIMEOUT_DELAY - OUTER_TIMEOUT_DELAY) *
-              i}ms cubic-bezier(0.755, 0.05, 0.855, 0.06)`
-          pc.current.style.filter = `blur(0.8px)`
-          pc.current.style.opacity = '0'
-          pc.current.style.transform = `rotate(${randomInteger(
-            10,
-            -10,
-          )}deg) translate(${100}px, ${-100}px)`
-        }
-      }, OUTER_TIMEOUT_DELAY * i + START_DELAY)
+      const delay = option.outerTimeoutDelay * i
+      const j = option.canvasNum - i - 1
+
+      if (pc.current) {
+        updateStyle(pc.current, {
+          transition: [
+            `filter ${option.baseDuration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}ms`,
+            `transform ${option.baseDuration +
+              option.innerTimeoutDelay * i}ms cubic-bezier(0.55, 0.085, 0.68, 0.53) ${delay}ms`,
+            `opacity ${option.baseDuration +
+              option.innerTimeoutDelay * i}ms cubic-bezier(0.755, 0.05, 0.855, 0.06) ${delay}ms`,
+          ],
+          filter: `blur(${option.blur}px)`,
+          opacity: '0',
+          transform: `rotate(${randomInteger(
+            option.rotateMax * (j / (option.canvasNum - 1)) ** 0.5,
+            option.rotateMin * (j / (option.canvasNum - 1)) ** 0.5,
+          )}deg) translate(${option.translateX}px, ${option.translateY}px)`,
+        })
+      }
     })
-  }, [])
+  }, [
+    option.baseDuration,
+    option.innerTimeoutDelay,
+    option.outerTimeoutDelay,
+    option.innerTimeoutDelay,
+  ])
 
   const handleRestore = useCallback(() => {
     if (imageRef.current) {
-      imageRef.current.style.transition = `opacity 5s cubic-bezier(0.165, 0.84, 0.44, 1) ${BASE_DURATION +
-        (INNER_TIMEOUT_DELAY + OUTER_TIMEOUT_DELAY) * (partialCanvas.current.length - 1)}ms`
-      imageRef.current.style.opacity = '1'
+      const delay = option.innerTimeoutDelay * (option.canvasNum - 1)
+      updateStyle(imageRef.current, {
+        transition: [
+          `opacity ${option.baseDuration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}ms`,
+          `filter ${option.baseDuration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}ms`,
+        ],
+        filter: '',
+        opacity: '1',
+      })
     }
     partialCanvas.current.forEach((pc, i) => {
-      const j = partialCanvas.current.length - i - 1
-      setTimeout(() => {
-        if (pc.current) {
-          pc.current.style.transition = `filter ${BASE_DURATION}ms cubic-bezier(0.55, 0.085, 0.68, 0.53) ${INNER_TIMEOUT_DELAY *
-            (i + j)}ms, transform ${BASE_DURATION +
-            INNER_TIMEOUT_DELAY * i}ms cubic-bezier(0.25, 0.46, 0.45, 0.94) ${INNER_TIMEOUT_DELAY *
-            j}ms, opacity ${BASE_DURATION +
-            (INNER_TIMEOUT_DELAY - OUTER_TIMEOUT_DELAY) *
-              i}ms cubic-bezier(0.23, 1, 0.32, 1) ${OUTER_TIMEOUT_DELAY * i +
-            INNER_TIMEOUT_DELAY * j}ms`
-          pc.current.style.filter = ''
-          pc.current.style.opacity = '1'
-          pc.current.style.transform = ''
-        }
-      }, OUTER_TIMEOUT_DELAY * j)
+      const j = option.canvasNum - i - 1
+      if (pc.current) {
+        updateStyle(pc.current, {
+          transition: [
+            `filter ${
+              option.baseDuration
+            }ms cubic-bezier(0.55, 0.085, 0.68, 0.53) ${option.innerTimeoutDelay * j +
+              (option.innerTimeoutDelay - option.outerTimeoutDelay) * i}ms`,
+            `transform ${option.baseDuration +
+              (option.innerTimeoutDelay - option.outerTimeoutDelay) *
+                i}ms cubic-bezier(0.25, 0.46, 0.45, 0.94) ${option.innerTimeoutDelay * j}ms`,
+            `opacity ${option.baseDuration +
+              (option.innerTimeoutDelay - option.outerTimeoutDelay) *
+                i}ms cubic-bezier(0.23, 1, 0.32, 1) ${option.innerTimeoutDelay * j}ms`,
+          ],
+          filter: '',
+          opacity: '1',
+          transform: '',
+        })
+      }
     })
-  }, [])
+  }, [
+    option.baseDuration,
+    option.innerTimeoutDelay,
+    option.outerTimeoutDelay,
+    option.innerTimeoutDelay,
+  ])
 
   const handleImageLoad = useCallback(e => {
     const canvas = canvasRef.current
@@ -124,22 +148,24 @@ function BaseDustEffect({ src, imgClassName, ...props }, ref) {
       canvas.height = e.target.clientHeight
       const context = canvas.getContext('2d')
       context.drawImage(e.target, 0, 0, canvas.width, canvas.height)
-      ac(canvas, partialCanvas.current)
+      updatePartialCanvas(canvas, partialCanvas.current, option.distributionFunc)
       setConverted(true)
     }
   }, [])
 
-  useImperativeHandle(ref, () => ({
-    start: handleStart,
-    restore: handleRestore,
-  }))
+  useEffect(() => {
+    if (converted) {
+      if (!show) handleStart()
+      else handleRestore()
+    }
+  }, [show])
 
   /* eslint-disable react/no-array-index-key */
   return (
     <>
       <div className={styles.wrapper} ref={wrapperRef} {...props}>
         <img
-          className={imgClassName ? `${styles.image} ${imgClassName}` : styles.image}
+          className={imgClassName}
           src={src}
           ref={imageRef}
           alt="DustEffectBaseImage"
@@ -158,15 +184,27 @@ function BaseDustEffect({ src, imgClassName, ...props }, ref) {
   )
 }
 
-const DustEffect = React.forwardRef(BaseDustEffect)
-
 DustEffect.defaultProps = {
   imgClassName: null,
+  option: defaultOption,
 }
 
 DustEffect.propTypes = {
+  show: PropTypes.bool.isRequired,
   src: PropTypes.string.isRequired,
   imgClassName: PropTypes.string,
+  option: PropTypes.shape({
+    canvasNum: PropTypes.number,
+    baseDuration: PropTypes.number,
+    outerTimeoutDelay: PropTypes.number,
+    innerTimeoutDelay: PropTypes.number,
+    translateX: PropTypes.number,
+    translateY: PropTypes.number,
+    rotateMin: PropTypes.number,
+    rotateMax: PropTypes.number,
+    blur: PropTypes.number,
+    distributionFunc: PropTypes.func,
+  }),
 }
 
 export default DustEffect

@@ -13,6 +13,7 @@ module.exports = {
         extensions: ['.js', '.jsx'],
       },
     ],
+    'no-param-reassign': 0,
     semi: [2, 'never'],
   },
 }

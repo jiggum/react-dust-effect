@@ -1,6 +1,6 @@
-# react-dust-effect
+# React Dust Effect
 
-Image dust effect for react.
+Convert your React components into dust!
 
 [![npm](https://img.shields.io/npm/v/react-dust-effect.svg)](https://www.npmjs.com/package/react-dust-effect)
 [![Build Status](https://api.travis-ci.com/jiggum/react-dust-effect.svg?branch=master)](https://travis-ci.com/jiggum/react-dust-effect)
@@ -12,33 +12,30 @@ Image dust effect for react.
 
 ## Installation
 
-yarn:
+#### Yarn
 ```bash
 yarn add react-dust-effect
 ```
 
-npm:
+#### NPM
 ```bash
 npm install --save react-dust-effect
 ```
 
 ## Usage
-
 ```js
+import React, { useState } from 'react';
 import DustEffect from 'react-dust-effect'
-...
-const dustEffectRef = useRef()
-...
-const handleEffectStart = () => {
-  if (dustEffect.current) dustEffect.current.start()
-}
 
-const handleEffectStart = () => {
-  if (dustEffect.current) dustEffect.current.restore()
+function App() {
+  const [show, setShow] = useState(false);
+  return (
+    <div>
+      <DustEffect src="smaple/image.png" show={show} />
+      <button onClick={() => setShow(!show)}>Effect!️</button>
+    </div>
+  );
 }
-...
-<DustEffect src="smaple/image.png" ref={dustEffectRef} />
-...
 ```
 
 ## Props
@@ -46,12 +43,31 @@ const handleEffectStart = () => {
 #### src: (required, string)
 - Target Image's src
 
+#### show: (required, boolean)
+- Showing state. Effect will trigger when this prop is changed
+
 #### imgClassName: (optional, string, default: null)
-- Inner <img> element's class name
+- Inner img element's className
 
-## Ref
-#### start(): void
-- Start dust effect's animation 
+#### option: (optional, object, default: {})
 
-#### restore(): void
-- Restore dust effect's animation
+##### option.canvasNum: (number, default: 25)
+
+##### option.baseDuration: (number, default: 800)
+
+##### option.outerTimeoutDelay: (number, default: 70)
+
+##### option.innerTimeoutDelay: (number, default: 110)
+
+##### option.translateX: (number, default: 100)
+
+##### option.translateY: (number, default: -100)
+
+##### option.rotateMin: (number, default: -15)
+
+##### option.rotateMax: (number, default: 15)
+
+##### option.blur: (number, default: 1)
+
+##### option.distributionFunc: (hPos: number, vPos: number, canvasIndex: number, canvasNum: number) => number,
+
