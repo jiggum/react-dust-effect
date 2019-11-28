@@ -71,3 +71,5 @@ function App() {
 
 ##### option.distributionFunc: (hPos: number, vPos: number, canvasIndex: number, canvasNum: number) => number,
 
+## Reference
+[redstapler](https://redstapler.co/thanos-snap-effect-javascript-tutorial/)
