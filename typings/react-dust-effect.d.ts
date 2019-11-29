@@ -5,7 +5,7 @@ export default function DustEffect(props: DustEffectProps): JSX.Element
 interface DustEffectProps extends React.HTMLAttributes<HTMLDivElement> {
   show: boolean
   src: string
-  imgClassName?: string
+  imgProps?: React.ImgHTMLAttributes<HTMLImageElement>
   option?: {
     canvasNum?: number,
     baseDuration?: number,

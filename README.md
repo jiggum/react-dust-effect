@@ -46,8 +46,8 @@ function App() {
 #### show: (required, boolean)
 - Showing state. Effect will trigger when this prop is changed
 
-#### imgClassName: (optional, string, default: null)
-- Inner img element's className
+#### imgProps: (optional, object, default: {}})
+- Inner img element's props
 
 #### option: (optional, object, default: {})
 

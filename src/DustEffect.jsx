@@ -49,7 +49,7 @@ function updatePartialCanvas(canvas, partialCanvas, distribution) {
   })
 }
 
-function DustEffect({ src, imgClassName, show, option, ...props }) {
+function DustEffect({ src, show, option, imgProps, ...props }) {
   option = {
     ...defaultOption,
     ...option,
@@ -69,6 +69,7 @@ function DustEffect({ src, imgClassName, show, option, ...props }) {
         ],
         filter: `blur(${option.blur}px)`,
         opacity: '0',
+        pointerEvents: 'none',
       })
     }
     partialCanvas.current.forEach((pc, i) => {
@@ -110,6 +111,7 @@ function DustEffect({ src, imgClassName, show, option, ...props }) {
         ],
         filter: '',
         opacity: '1',
+        pointerEvents: 'auto',
       })
     }
     partialCanvas.current.forEach((pc, i) => {
@@ -141,17 +143,21 @@ function DustEffect({ src, imgClassName, show, option, ...props }) {
     option.innerTimeoutDelay,
   ])
 
-  const handleImageLoad = useCallback(e => {
-    const canvas = canvasRef.current
-    if (canvas) {
-      canvas.width = e.target.clientWidth
-      canvas.height = e.target.clientHeight
-      const context = canvas.getContext('2d')
-      context.drawImage(e.target, 0, 0, canvas.width, canvas.height)
-      updatePartialCanvas(canvas, partialCanvas.current, option.distributionFunc)
-      setConverted(true)
-    }
-  }, [])
+  const handleImageLoad = useCallback(
+    e => {
+      const canvas = canvasRef.current
+      if (canvas) {
+        canvas.width = e.target.clientWidth
+        canvas.height = e.target.clientHeight
+        const context = canvas.getContext('2d')
+        context.drawImage(e.target, 0, 0, canvas.width, canvas.height)
+        updatePartialCanvas(canvas, partialCanvas.current, option.distributionFunc)
+        setConverted(true)
+      }
+      if (imgProps.onLoad) imgProps.onLoad(e)
+    },
+    [imgProps.onLoad],
+  )
 
   useEffect(() => {
     if (converted) {
@@ -165,10 +171,11 @@ function DustEffect({ src, imgClassName, show, option, ...props }) {
     <>
       <div className={styles.wrapper} ref={wrapperRef} {...props}>
         <img
-          className={imgClassName}
           src={src}
+          crossOrigin="Anonymous"
           ref={imageRef}
           alt="DustEffectBaseImage"
+          {...imgProps}
           onLoad={handleImageLoad}
         />
         {!converted && <canvas ref={canvasRef} className={styles.hide} />}
@@ -185,14 +192,15 @@ function DustEffect({ src, imgClassName, show, option, ...props }) {
 }
 
 DustEffect.defaultProps = {
-  imgClassName: null,
+  imgProps: {},
   option: defaultOption,
 }
 
 DustEffect.propTypes = {
   show: PropTypes.bool.isRequired,
   src: PropTypes.string.isRequired,
-  imgClassName: PropTypes.string,
+  // eslint-disable-next-line react/forbid-prop-types
+  imgProps: PropTypes.object,
   option: PropTypes.shape({
     canvasNum: PropTypes.number,
     baseDuration: PropTypes.number,
