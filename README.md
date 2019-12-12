@@ -69,6 +69,13 @@ function App() {
 ##### option.blur: (number, default: 1)
 
 ##### option.distributionFunc: (hPos: number, vPos: number, canvasIndex: number, canvasNum: number) => number,
+> Distribution function that defining the number of particles for each layers.
+>
+> See the `defaultDistribution` function on 'src/DustEffect.jsx' 
+- hPos: Pixel's position percentage from left (hpos: 0.5 -> pixel located at center column)
+- vPos: Pixel's position percentage from top (vpos: 0 -> pixel located at top row)
+- canvasIndex: Index of the current canvas
+- canvasNum: Total canvas number
 
 ## Reference
 [redstapler](https://redstapler.co/thanos-snap-effect-javascript-tutorial/)
