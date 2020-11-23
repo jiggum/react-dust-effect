@@ -7,7 +7,7 @@ Convert your React components into dust!
 [![min](https://img.shields.io/bundlephobia/min/react-dust-effect.svg)](https://www.npmjs.com/package/react-dust-effect)
 [![minzip](https://img.shields.io/bundlephobia/minzip/react-dust-effect.svg)](https://www.npmjs.com/package/react-dust-effect)
 
-![effect start](http://thanos.jiggum.s3.amazonaws.com/assets/dust-effect.gif)
+![effect start](https://s3.ap-northeast-2.amazonaws.com/thanos.jiggum/assets/dust-effect.gif)
 
 ## Installation
 
